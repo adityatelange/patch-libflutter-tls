@@ -57,6 +57,26 @@ Tested on:
 
    > I recommend using [APK Explorer & Editor (AEE)](https://github.com/apk-editor/APK-Explorer-Editor) for this step.
 
+## Options
+
+```sh
+$ python patch_libflutter_tls.py -h
+usage: patch_libflutter_tls.py [-h] -i INPUT [-o OUTPUT] [-u] [--arch {x86,x64,arm,arm64}] [--thumb]
+
+Patch libflutter.so to disable Flutter TLS verification.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        Input .so file (libflutter.so)
+  -o OUTPUT, --output OUTPUT
+                        Output patched .so file (default: <input>.patched.so)
+  -u, --inplace         Overwrite input file (write patched output to same path)
+  --arch {x86,x64,arm,arm64}
+                        Force architecture (optional)
+  --thumb               If patching ARM, assemble thumb variant (if using keystone)
+```
+
 ## Disclaimer
 
 > [!WARNING]
