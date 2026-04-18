@@ -248,6 +248,7 @@ def main():
     ap = argparse.ArgumentParser(description="Patch libflutter.so to disable Flutter TLS verification.")
     ap.add_argument("-i", "--input", required=True, help="Input .so file (libflutter.so)")
     ap.add_argument("-o", "--output", required=False, help="Output patched .so file (default: <input>.patched.so)")
+    ap.add_argument("-u", "--inplace", action="store_true", help="Overwrite input file (write patched output to same path)")
     ap.add_argument("--arch", required=False, choices=["x86", "x64", "arm", "arm64"], help="Force architecture (optional)")
     ap.add_argument("--thumb", action="store_true", help="If patching ARM, assemble thumb variant (if using keystone)")
     args = ap.parse_args()
@@ -256,7 +257,14 @@ def main():
     if not inp.exists():
         print("Input file not found:", args.input)
         sys.exit(1)
-    out = Path(args.output) if args.output else inp.with_suffix(inp.suffix + ".patched.so")
+    if args.inplace and args.output:
+        print("Cannot use --inplace (-u) and --output (-o) together.")
+        sys.exit(1)
+    if args.inplace:
+        out = inp
+        print("[*] In-place update enabled; output will overwrite input file")
+    else:
+        out = Path(args.output) if args.output else inp.with_suffix(inp.suffix + ".patched.so")
     try:
         patch_file(inp, out, force_arch=args.arch, thumb=args.thumb)
     except Exception as e:
