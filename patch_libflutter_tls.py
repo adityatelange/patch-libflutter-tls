@@ -155,23 +155,23 @@ def patch_data_bytes(data, force_arch=None, thumb=False, path=None):
     if force_arch:
         arch_key = force_arch
         if path:
-            print("[*] Forcing arch key %s for %s" % (arch_key, path))
+            print("    [*] Forcing arch key %s for %s" % (arch_key, path))
         else:
-            print("[*] Forcing arch key: %s" % arch_key)
+            print("    [*] Forcing arch key: %s" % arch_key)
     else:
         if e_machine is None:
-            print("[!] Input not recognized as ELF - defaulting to x64 patterns.")
+            print("    [!] Input not recognized as ELF - defaulting to x64 patterns.")
             arch_key = "x64"
         else:
             arch_key = EM_TO_ARCH.get(e_machine)
             if arch_key is None:
-                print("[!] Unknown ELF machine %d; defaulting to x64 patterns." % e_machine)
+                print("    [!] Unknown ELF machine %d; defaulting to x64 patterns." % e_machine)
                 arch_key = "x64"
             else:
                 if path:
-                    print("[*] Detected architecture %s for %s" % (arch_key, path))
+                    print("    [*] Detected architecture %s for %s" % (arch_key, path))
                 else:
-                    print("[*] Detected architecture: %s (e_machine=%d)" % (arch_key, e_machine))
+                    print("    [*] Detected architecture: %s (e_machine=%d)" % (arch_key, e_machine))
 
     patterns = ANDROID_PATTERNS.get(arch_key)
     if not patterns:
@@ -185,10 +185,10 @@ def patch_data_bytes(data, force_arch=None, thumb=False, path=None):
         matches = find_all_matches(data, vals, masks)
         if not matches:
             continue
-        print("[+] Pattern matched (%d hits) for pattern: %s" % (len(matches), pat))
+        print("    [+] Pattern matched (%d hits) for pattern: %s" % (len(matches), pat))
         for off in matches:
             total_matches += 1
-            print("    - patching offset 0x%X" % off)
+            print("    [#] patching offset 0x%X" % off)
             try:
                 stub = assemble_patch(arch_key, thumb=thumb)
                 total_patches += 1
@@ -228,8 +228,10 @@ def patch_apk(input_path: Path, output_path: Path):
                 data = zin.read(zi.filename)
                 if Path(zi.filename).name == "libflutter.so":
                     apk_libs += 1
-                    print("[*] Found libflutter.so in APK at %s" % zi.filename)
+                    print("  [*] Found libflutter.so in APK at %s" % zi.filename)
                     patched_data, matches, patches = patch_data_bytes(data, path=zi.filename)
+                    if matches == 0:
+                        print("    [-] No patterns matched")
                     patched_libs += patches
                     total_matches += matches
                     data = patched_data
