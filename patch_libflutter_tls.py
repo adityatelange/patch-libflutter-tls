@@ -179,6 +179,7 @@ def patch_data_bytes(data, force_arch=None, thumb=False, path=None):
 
     patched = bytearray(data)
     total_matches = 0
+    total_patches = 0
     for pat in patterns:
         vals, masks = parse_pattern(pat)
         matches = find_all_matches(data, vals, masks)
@@ -190,6 +191,7 @@ def patch_data_bytes(data, force_arch=None, thumb=False, path=None):
             print("    - patching offset 0x%X" % off)
             try:
                 stub = assemble_patch(arch_key, thumb=thumb)
+                total_patches += 1
             except Exception as e:
                 print("    [!] Cannot assemble patch for arch %s: %s" % (arch_key, e))
                 print("    [!] Skipping this match.")
@@ -212,7 +214,7 @@ def patch_data_bytes(data, force_arch=None, thumb=False, path=None):
                         if pad % 4 != 0:
                             pad += (4 - (pad % 4))
                     patched[off+write_len:off+write_len+pad] = nop * (pad // len(nop))
-    return bytes(patched), total_matches
+    return bytes(patched), total_matches, total_patches
 
 
 def patch_apk(input_path: Path, output_path: Path):
@@ -227,10 +229,9 @@ def patch_apk(input_path: Path, output_path: Path):
                 if Path(zi.filename).name == "libflutter.so":
                     apk_libs += 1
                     print("[*] Found libflutter.so in APK at %s" % zi.filename)
-                    patched_data, matches = patch_data_bytes(data, path=zi.filename)
-                    if matches > 0:
-                        patched_libs += 1
-                        total_matches += matches
+                    patched_data, matches, patches = patch_data_bytes(data, path=zi.filename)
+                    patched_libs += patches
+                    total_matches += matches
                     data = patched_data
                 new_info = clone_zip_info(zi)
                 zout.writestr(new_info, data)
@@ -238,7 +239,7 @@ def patch_apk(input_path: Path, output_path: Path):
         print("[!] No libflutter.so files found in APK.")
     else:
         print("[+] Patched %d/%d libflutter.so files in APK." % (patched_libs, apk_libs))
-    return total_matches
+    return patched_libs, total_matches
 
 
 def assemble_patch(arch_key, thumb=False):
@@ -310,9 +311,11 @@ def main():
     out = inp.with_name(inp.stem + "_patched" + inp.suffix)
 
     try:
-        total_matches = patch_apk(inp, out)
-        if total_matches == 0:
+        matches, patches = patch_apk(inp, out)
+        if matches == 0:
             print("[!] No matches were found. The output file will still be written but unchanged.")
+        elif patches == 0:
+            print("[!] No patches were applied. The output file will still be written but unchanged.")
         print("[+] Wrote patched APK to:", str(out))
     except Exception as e:
         print("[!] Error:", e)
