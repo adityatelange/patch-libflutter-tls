@@ -215,7 +215,7 @@ def patch_data_bytes(data, force_arch=None, thumb=False, path=None):
     return bytes(patched), total_matches
 
 
-def patch_apk(input_path: Path, output_path: Path, force_arch=None, thumb=False):
+def patch_apk(input_path: Path, output_path: Path):
     print("[*] Patching APK: %s" % input_path)
     total_matches = 0
     patched_libs = 0
@@ -227,7 +227,7 @@ def patch_apk(input_path: Path, output_path: Path, force_arch=None, thumb=False)
                 if Path(zi.filename).name == "libflutter.so":
                     apk_libs += 1
                     print("[*] Found libflutter.so in APK at %s" % zi.filename)
-                    patched_data, matches = patch_data_bytes(data, force_arch=force_arch, thumb=thumb, path=zi.filename)
+                    patched_data, matches = patch_data_bytes(data, path=zi.filename)
                     if matches > 0:
                         patched_libs += 1
                         total_matches += matches
@@ -286,22 +286,6 @@ def arch_nop_bytes(arch_key):
         return b'\xd5\x03\x20\x1f'
     return b'\x00'
 
-def patch_file(input_path: Path, output_path: Path, force_arch=None, thumb=False):
-    if input_path.suffix.lower() == ".apk":
-        total_matches = patch_apk(input_path, output_path, force_arch=force_arch, thumb=thumb)
-        print("[+] Wrote patched APK to:", str(output_path))
-        print("[+] Total patched matches:", total_matches)
-        return
-
-    data = input_path.read_bytes()
-    patched, total_matches = patch_data_bytes(data, force_arch=force_arch, thumb=thumb)
-    if total_matches == 0:
-        print("[!] No matches were found. The output file will still be written but unchanged.")
-    output_path.write_bytes(patched)
-    print("[+] Wrote patched file to:", str(output_path))
-    print("[+] Total patched matches:", total_matches)
-
-
 def print_banner():
     print("patch-flutter-tls - Patch APK files to disable Flutter TLS verification in libflutter.so")
     print("GitHub: https://github.com/adityatelange/patch-flutter-tls")
@@ -326,7 +310,10 @@ def main():
     out = inp.with_name(inp.stem + "_patched" + inp.suffix)
 
     try:
-        patch_file(inp, out)
+        total_matches = patch_apk(inp, out)
+        if total_matches == 0:
+            print("[!] No matches were found. The output file will still be written but unchanged.")
+        print("[+] Wrote patched APK to:", str(out))
     except Exception as e:
         print("[!] Error:", e)
         sys.exit(2)
