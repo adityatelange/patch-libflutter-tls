@@ -20,7 +20,14 @@ Also, the upstream Frida script is not compatible with Frida 17.x, so I decided 
 
 ## Usage
 
-1. Run the patch script on an APK:
+1. Install the tool with `uv` or run it directly.
+
+   ```sh
+   uv install .
+   patch-flutter-tls com.app.apk
+   ```
+
+   Or run directly:
 
    ```sh
    python3 patch_libflutter_tls.py com.app.apk
