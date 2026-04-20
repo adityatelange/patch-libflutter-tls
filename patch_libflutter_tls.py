@@ -302,7 +302,14 @@ def patch_file(input_path: Path, output_path: Path, force_arch=None, thumb=False
     print("[+] Total patched matches:", total_matches)
 
 
+def print_banner():
+    print("patch-flutter-tls - Patch APK files to disable Flutter TLS verification in libflutter.so")
+    print("GitHub: https://github.com/adityatelange/patch-flutter-tls")
+    print()
+
+
 def main():
+    print_banner()
     ap = argparse.ArgumentParser(description="Patch APK files to disable Flutter TLS verification.")
     ap.add_argument("apk_path", help="Input APK file path")
     args = ap.parse_args()
